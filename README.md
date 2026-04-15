@@ -1,16 +1,6 @@
 # Container-Runtime
 ![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Linux-black?style=for-the-badge&logo=linux&logoColor=white)
-![Kernel](https://img.shields.io/badge/Kernel-Space-orange?style=for-the-badge&logo=linux&logoColor=white)
-![Runtime](https://img.shields.io/badge/Runtime-Container%20Engine-success?style=for-the-badge)
-![Isolation](https://img.shields.io/badge/Isolation-Namespaces-brightgreen?style=for-the-badge)
-![IPC](https://img.shields.io/badge/IPC-Pipes%20%7C%20Sockets-informational?style=for-the-badge)
-![Scheduler](https://img.shields.io/badge/Scheduler-CFS-red?style=for-the-badge)
-![Memory](https://img.shields.io/badge/Memory-RSS%20Tracking-yellow?style=for-the-badge)
-![Architecture](https://img.shields.io/badge/Architecture-Supervisor%20Model-purple?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
-![Build](https://img.shields.io/badge/Build-Makefile-blueviolet?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)
+
 
 
 A lightweight Docker-like container runtime built from scratch in C. Runs isolated containers using Linux namespaces, captures output through a bounded-buffer logging pipeline, enforces memory limits via a kernel module, and exposes a supervisor CLI.
