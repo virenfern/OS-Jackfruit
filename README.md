@@ -11,8 +11,8 @@ A lightweight Docker-like container runtime built from scratch in C. Runs isolat
 
 | Name | SRN |
 |------|-----|
-| Vivian Sobers E | PES1UG24CS901 |
-| Dhawal Pathak | PES1UG24CS151 |
+| Viren James Fernandes | PES2UG24CS590|
+| Divyanshu Jha| PES2UG24CS915|
 
 ---
 
@@ -43,72 +43,49 @@ make
 
 This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
 
-### Copy Workloads into Rootfs
-
-```bash
+# --- 1. PREP & BUILD ---
+# Move to the project root and prep workloads
+cd ~/OS-Jackfruit/boilerplate
+sudo make clean && make
 cp cpu_hog io_pulse memory_hog ../rootfs/
-```
 
-### Load Kernel Module
-
-```bash
+# --- 2. KERNEL & SUPERVISOR (Terminal 1) ---
+# Load the monitor and start the supervisor
 sudo insmod monitor.ko
+# Verify device creation
 ls -l /dev/container_monitor
-```
-
-### Start Supervisor
-
-```bash
-# Terminal 1
+# Launch supervisor (pointing to rootfs one level up)
 sudo ./engine supervisor ../rootfs
-```
 
-### Launch Containers
-
-```bash
-# Terminal 2
+# --- 3. BASIC CLI OPERATIONS (Terminal 2) ---
+# Run these while Terminal 1 is active
 sudo ./engine start alpha ../rootfs /bin/hostname
-sudo ./engine start beta ../rootfs /bin/sh
 sudo ./engine ps
 sudo ./engine logs alpha
 sudo ./engine stop alpha
-```
 
-### Run a Container in Foreground
+# --- 4. TASK 5: SCHEDULING EXPERIMENTS ---
 
-```bash
-sudo ./engine run mycontainer ../rootfs /cpu_hog 5
-```
-
-### Memory Limit Test
-
-```bash
-sudo ./engine start memtest ../rootfs /memory_hog 1 500 --soft-mib 3 --hard-mib 6
-sudo dmesg | grep memtest
-```
-
-### Scheduling Experiments
-
-```bash
-# Two CPU-bound containers with different priorities
+# Experiment A: Nice Value Competition (Priority)
 time sudo ./engine run cpu_normal ../rootfs /cpu_hog 10 --nice 0 & \
 time sudo ./engine run cpu_nice ../rootfs /cpu_hog 10 --nice 15 &
 wait
 
-# CPU-bound vs I/O-bound
+# Experiment B: CPU-Bound vs I/O-Bound
 time sudo ./engine run cpu_exp ../rootfs /cpu_hog 10 --nice 0 & \
 time sudo ./engine run io_exp ../rootfs /io_pulse 20 200 &
 wait
-```
 
-### Unload Module and Clean Up
+# --- 5. TASK 6: MEMORY LIMIT ENFORCEMENT ---
+# Soft limit 3MB, Hard limit 6MB
+sudo ./engine start memtest ../rootfs /memory_hog 1 500 --soft-mib 3 --hard-mib 6
+# Check kernel logs for the kill event
+sudo dmesg | tail -n 20
 
-```bash
+# --- 6. CLEAN TEARDOWN ---
+# Stop supervisor with Ctrl+C in Terminal 1, then:
 sudo rmmod monitor
-unlink /tmp/mini_runtime.sock
-```
-
----
+sudo rm -f /tmp/mini_runtime.sock
 
 ## 3. Demo Screenshots
 
