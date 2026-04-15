@@ -160,7 +160,8 @@ Memory enforcement is handled by a custom Linux Kernel Module (LKM). The LKM mai
 
 ### 4.5 Scheduling Behavior
 
-By using the nice() system call inside the child_fn, we influence the Linux Completely Fair Scheduler (CFS). Our project demonstrates that while all containers are "fairly" scheduled, those with a lower priority (higher nice value) receive fewer CPU cycles when the system is under contention. This is verified by timing CPU-bound workloads running simultaneously with different nice values.
+This project implements a lightweight container runtime in C that provides process isolation, resource monitoring, and a centralized management system. It utilizes Linux Namespaces (PID, UTS, Mount) to create isolated execution environments, managed by a multi-threaded Supervisor that handles container lifecycles and logging via a synchronized Bounded-Buffer pipeline. A custom Linux Kernel Module (LKM) performs periodic Resident Set Size (RSS) checks to enforce memory limits, while the CFS scheduler is leveraged via nice values to demonstrate prioritized CPU allocation. Finally, a CLI client communicates with the supervisor over Unix Domain Sockets to provide a robust interface for starting, stopping, and monitoring containers.
+
 ---
 
 ## 5. Design Decisions and Tradeoffs
