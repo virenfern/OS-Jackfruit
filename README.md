@@ -43,7 +43,7 @@ make
 
 This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
 
-# --- 1. PREP & BUILD ---
+# 1. Prep and Build
 # Move to the project root and prep workloads
 ```bash
 cd ~/OS-Jackfruit/boilerplate
@@ -51,7 +51,7 @@ sudo make clean && make
 cp cpu_hog io_pulse memory_hog ../rootfs/
 ```
 
-# --- 2. KERNEL & SUPERVISOR (Terminal 1) ---
+# 2. Kernel and Supervisor (Terminal 1) 
 # Load the monitor and start the supervisor
 ```bash
 sudo insmod monitor.ko
@@ -60,7 +60,7 @@ ls -l /dev/container_monitor
 # Launch supervisor (pointing to rootfs one level up)
 sudo ./engine supervisor ../rootfs
 ```
-# --- 3. BASIC CLI OPERATIONS (Terminal 2) ---
+#  3. Basic CLI Operations (Terminal 2)
 # Run these while Terminal 1 is active
 ```bash
 sudo ./engine start alpha ../rootfs /bin/hostname
@@ -68,7 +68,7 @@ sudo ./engine ps
 sudo ./engine logs alpha
 sudo ./engine stop alpha
 ```
-# --- 4. TASK 5: SCHEDULING EXPERIMENTS ---
+# 4. TASK 5: Scheduling Experiments
 
 # Experiment A: Nice Value Competition (Priority)
 ```
@@ -84,14 +84,14 @@ time sudo ./engine run io_exp ../rootfs /io_pulse 20 200 &
 wait
 ```
 
-# --- 5. TASK 6: MEMORY LIMIT ENFORCEMENT ---
+# 5. TASK 6: Memory Limit Enforcement
 # Soft limit 3MB, Hard limit 6MB
 ```
 sudo ./engine start memtest ../rootfs /memory_hog 1 500 --soft-mib 3 --hard-mib 6
 # Check kernel logs for the kill event
 sudo dmesg | tail -n 20
 ```
-# --- 6. CLEAN TEARDOWN ---
+# 6. Clean Teardown
 # Stop supervisor with Ctrl+C in Terminal 1, then:
 ```bash
 sudo rmmod monitor
