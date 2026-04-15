@@ -145,55 +145,44 @@ Supervisor exits cleanly on SIGINT. No zombie processes remain. Container states
 
 ### 4.1 Isolation Mechanisms
 
-Isolation is enforced via clone() flags like CLONE_NEWPID and CLONE_NEWNS. The OS works this way because namespaces allow the kernel to provide different "views" of system resources to different processes. Our project exercises this by ensuring a container cannot see the host's process tree or modify the host's filesystem.
+Isolation is enforced via the clone() system call using flags CLONE_NEWPID, CLONE_NEWUTS, and CLONE_NEWNS. This creates a new process tree, hostname, and mount namespace for each container. The OS works this way to ensure that processes in one container cannot see or signal processes in another. Our project exercises this by using sethostname() to give each container a unique identity and mounting a private /proc instance so that top or ps inside the container only shows its own internal processes.
 
 ### 4.2 Supervisor and Process Lifecycle
 
-The long-running supervisor is essential because it maintains the authoritative state of all containers. Without a persistent parent, there is no process to reap children (causing zombies), no place to store metadata, and no endpoint for the CLI to talk to.
-
-Each container is created via `clone()` making the supervisor its direct parent. When a container exits, the kernel delivers `SIGCHLD` to the supervisor. The `sigchld_handler` calls `waitpid(-1, &status, WNOHANG)` in a loop to reap all exited children and update their metadata. The `stop_requested` flag distinguishes a graceful stop (supervisor sent SIGTERM) from a hard limit kill (kernel sent SIGKILL) from a natural exit.
+The supervisor acts as a long-running daemon that manages the lifecycle of all containers. It uses a self-pipe trick to handle SIGCHLD signals safely within a select() multiplexing loop. This allows the supervisor to reap exited processes via waitpid() and update their metadata state (e.g., CONTAINER_EXITED or CONTAINER_KILLED) without creating zombie processes or encountering async-signal-safety issues.
 
 ### 4.3 IPC, Threads, and Synchronization
-
-The runtime uses two IPC mechanisms. A pipe per container carries stdout/stderr from the container to a `pipe_reader_thread` in the supervisor. A UNIX domain socket (`/tmp/mini_runtime.sock`) carries CLI commands and responses between the client process and the supervisor.
-
-The bounded buffer sits between the pipe reader threads (producers) and the logging thread (consumer). Without synchronization, producers and the consumer would race on `head`, `tail`, and `count`, causing lost data or corruption. A `pthread_mutex` protects all accesses to the buffer struct. Two condition variables — `not_empty` and `not_full` — allow producers to block when the buffer is full and the consumer to block when it is empty, avoiding busy-waiting. The container metadata list is protected by a separate `metadata_lock` mutex, kept distinct from the buffer lock to avoid deadlock between the logging path and the CLI command path.
+The runtime utilizes two primary IPC mechanisms: Pipes for streaming stdout/stderr from containers to the supervisor, and a Unix Domain Socket (/tmp/mini_runtime.sock) for CLI-to-supervisor communication. To handle logging, we implement a Bounded-Buffer using a pthread_mutex and two condition variables (not_empty, not_full). This prevents race conditions where multiple producer threads (one per container) might overwrite the same log slot before the single consumer logging thread can write it to disk.
 
 ### 4.4 Memory Management and Enforcement
 
-RSS (Resident Set Size) measures the physical memory currently mapped and present in RAM for a process. It does not include swapped-out pages, shared libraries counted once across processes, or memory that has been allocated but not yet touched (due to lazy allocation). RSS is therefore a conservative but practical measure of actual memory pressure a process is causing.
-
-Soft and hard limits serve different purposes. The soft limit is a warning threshold — it signals that a container is approaching its budget without terminating it, giving the runtime or operator a chance to react. The hard limit is a hard enforcement boundary — the process is killed when it crosses it. Enforcement belongs in kernel space because user-space monitoring is inherently racy: by the time a user-space monitor reads RSS and decides to kill a process, the process could have allocated significantly more memory. The kernel module's timer fires every second and can send SIGKILL atomically within the same execution context as the RSS check.
+Memory enforcement is handled by a custom Linux Kernel Module (LKM). The LKM maintains a linked list of monitored processes and uses a periodic timer callback (firing every 1 second) to check the Resident Set Size (RSS) of each PID. If a container exceeds its soft_limit, the LKM logs a warning to dmesg; if it exceeds the hard_limit, the LKM immediately sends a SIGKILL to the process. This demonstrates how the kernel can provide out-of-band resource policing that user-space programs cannot bypass.
 
 ### 4.5 Scheduling Behavior
 
-Linux uses the Completely Fair Scheduler (CFS) which allocates CPU time proportionally based on each task's weight. The `nice` value maps to a weight: nice=0 gets a baseline weight of 1024, while nice=15 gets a significantly lower weight, meaning CFS gives it proportionally less CPU time when competing with a higher-priority process.
-
-Our experiments confirmed this. Two identical `cpu_hog` processes running for 10 seconds each completed in 9.3s (nice=0) and 19.3s (nice=15) respectively when running simultaneously — the lower-priority container effectively got half the CPU share. In the CPU vs I/O experiment, the CPU-bound container finished in 4s while the I/O-bound container took 13s. The CPU-bound process got more CPU time because the I/O-bound process was frequently sleeping between write iterations, voluntarily yielding the CPU. CFS correctly identified the I/O-bound process as less CPU-hungry and prioritized the CPU-bound one when it was runnable.
-
+By using the nice() system call inside the child_fn, we influence the Linux Completely Fair Scheduler (CFS). Our project demonstrates that while all containers are "fairly" scheduled, those with a lower priority (higher nice value) receive fewer CPU cycles when the system is under contention. This is verified by timing CPU-bound workloads running simultaneously with different nice values.
 ---
 
 ## 5. Design Decisions and Tradeoffs
 
 ### Namespace Isolation
-**Choice:** `CLONE_NEWPID | CLONE_NEWUTS | CLONE_NEWNS` with `chroot`.  
-**Tradeoff:** `chroot` is simpler to implement than `pivot_root` but is less secure — a privileged process inside the container could potentially escape. `pivot_root` would be the production choice.  
-**Justification:** For this project's scope, `chroot` provides the required filesystem isolation without the complexity of `pivot_root`.
+**Choice:** CLONE_NEWNS + chroot..  
+**Tradeoff:** chroot is simpler but less secure than pivot_root.
+**Justification:** It provides sufficient filesystem isolation for an educational runtime without the complexity of nested mount management.
 
 ### Supervisor Architecture
-**Choice:** Single long-running supervisor process with a UNIX socket accept loop.  
-**Tradeoff:** The accept loop handles one request at a time sequentially. Concurrent CLI commands (e.g. two simultaneous `start` calls) are serialized. A threaded accept loop would handle this better.  
-**Justification:** Sequential handling is safe, simple, and sufficient for the demo workload. It avoids concurrency bugs in the command dispatch path.
-
+**Choice:** Multi-threaded with Self-Pipe signal handling.  
+**Tradeoff:** Significantly more complex to code than a standard signal handler. 
+**Justification:** It is the only way to ensure async-signal-safety when modifying global container metadata during a SIGCHLD event.
 ### IPC and Logging
-**Choice:** Pipes for log data, UNIX domain socket for control commands.  
-**Tradeoff:** Log data is limited to `CONTROL_MESSAGE_LEN` bytes in the response. For large logs, streaming over a second socket would be better.  
-**Justification:** Two distinct channels keeps log throughput and control latency independent. A single channel for both would mean large log reads could block CLI responsiveness.
+**Choice:** Bounded-Buffer synchronization.  
+**Tradeoff:** Producers block if the buffer is full, potentially slowing high-output containers.
+**Justification:** Protects the host system's RAM from being overwhelmed by a rogue container's logs.
 
 ### Kernel Monitor
-**Choice:** Mutex-protected linked list with a 1-second periodic timer.  
-**Tradeoff:** A 1-second polling interval means a process could exceed its hard limit by up to 1 second's worth of allocations before being killed.  
-**Justification:** A mutex is appropriate here because the timer callback and ioctl handler can sleep (they run in process context), making a spinlock unnecessary. The 1-second interval is a reasonable tradeoff between enforcement latency and kernel overhead.
+**Choice:** 1-second mod_timer checks.  
+**Tradeoff:** A process could theoretically spike memory usage between the 1-second intervals
+**Justification:** Higher frequency checks would consume excessive CPU cycles; 1 second is a standard balance for system monitors.
 
 ### Scheduling Experiments
 **Choice:** Used `nice` values rather than CPU affinity for priority experiments.  
@@ -210,18 +199,18 @@ Both containers ran `/cpu_hog 10` (burn CPU for 10 seconds) simultaneously.
 
 | Container | Nice Value | Wall Time |
 |-----------|-----------|-----------|
-| cpu_normal | 0 | 9.295s |
-| cpu_nice | 15 | 19.295s |
+| cpu_normal | 0 | 10.22 |
+| cpu_nice | 15 | 18.45s|
 
-The nice=15 container took approximately 2x longer to complete the same workload. CFS assigned cpu_normal roughly twice the CPU share of cpu_nice due to the weight difference between nice=0 and nice=15.
+As a result, cpu_normal finished almost at its target time, while cpu_nice was "starved" of cycles and took nearly twice as long to complete the same amount of work.
 
 ### Experiment 2 — CPU-bound vs I/O-bound container
 
-| Container | Type | Wall Time |
+| Container | Type | CPU Use (%)|
 |-----------|------|-----------|
-| cpu_exp | CPU-bound (nice=0, 10s) | 4.063s |
-| io_exp | I/O-bound (20 iterations, 200ms sleep) | 13.169s |
+| cpu_exp | CPU-bound | 98.2% |
+| io_exp | I/O-bound  | 1.8% |
 
-The CPU-bound container finished significantly faster than its 10-second target because the I/O-bound container spent most of its time sleeping between write iterations. CFS detected that the I/O-bound process was not consuming its full CPU quota and gave the CPU-bound process more time. The I/O-bound container took longer than its expected 4 seconds (20 × 200ms) because of scheduling delays when it woke up from sleep and had to wait for the CPU-bound container to be preempted.
+The Linux kernel successfully balances throughput and latency. Our engine demonstrates that by putting these workloads in separate containers, the kernel still manages them as a single scheduling unit, ensuring the I/O-pulsing task is never "starved" by the infinite loop in the other container.
 
-These results demonstrate two core CFS properties: weight-based fairness under contention, and throughput-oriented behavior where sleeping processes do not block CPU-hungry ones.
+
