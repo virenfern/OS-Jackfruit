@@ -145,9 +145,7 @@ Supervisor exits cleanly on SIGINT. No zombie processes remain. Container states
 
 ### 4.1 Isolation Mechanisms
 
-Each container is created using `clone()` with `CLONE_NEWPID`, `CLONE_NEWUTS`, and `CLONE_NEWNS` flags. These flags give the container its own PID namespace (so processes inside see themselves starting at PID 1), its own UTS namespace (allowing a distinct hostname), and its own mount namespace (so filesystem mounts don't leak to the host). After `clone()`, the child calls `chroot()` into the Alpine rootfs, then mounts `/proc` inside the new mount namespace so process visibility works correctly inside the container.
-
-The host kernel is still fully shared — all containers run on the same kernel, share the same physical memory management, and are subject to the same scheduler. Namespaces provide isolation of views, not true separation. The host can always see all container processes by their host PIDs.
+Isolation is enforced via clone() flags like CLONE_NEWPID and CLONE_NEWNS. The OS works this way because namespaces allow the kernel to provide different "views" of system resources to different processes. Our project exercises this by ensuring a container cannot see the host's process tree or modify the host's filesystem.
 
 ### 4.2 Supervisor and Process Lifecycle
 
