@@ -4,19 +4,11 @@ A lightweight Docker-like container runtime built from scratch in C. Runs isolat
 
 ---
 
-## Getting Started
-
-### 1. Fork the Repository
-
-1. Go to [github.com/shivangjhalani/OS-Jackfruit](https://github.com/shivangjhalani/OS-Jackfruit)
-2. Click **Fork** (top-right)
-3. Clone your fork:
-
-```bash
-git clone https://github.com/<your-username>/OS-Jackfruit.git
-cd OS-Jackfruit
-```
-
+### 1. Team Information
+* **Name:** Viren James Fernandes
+* **SRN:** PES2UG24CS590
+* **Name:** Divyanshu Jha
+* **SRN:** PES2UG24CS915
 ### 2. Set Up Your VM
 
 You need an **Ubuntu 22.04 or 24.04** VM with **Secure Boot OFF**. WSL will not work.
