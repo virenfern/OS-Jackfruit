@@ -1,8 +1,6 @@
 # Multi-Container Runtime
+A lightweight Docker-like container runtime built from scratch in C. Runs isolated containers using Linux namespaces, captures output through a bounded-buffer logging pipeline, enforces memory limits via a kernel module, and exposes a supervisor CLI.
 
-A lightweight Linux container runtime in C with a long-running supervisor and a kernel-space memory monitor.
-
-Read [`project-guide.md`](project-guide.md) for the full project specification.
 
 ---
 
