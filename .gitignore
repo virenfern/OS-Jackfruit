@@ -17,6 +17,7 @@ modules.order
 .tmp_versions/
 
 # Root filesystems
+rootfs/
 rootfs-base/
 rootfs-*/
 *.tar.gz
