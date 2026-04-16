@@ -1,4 +1,4 @@
-# Container-Runtime
+# OS MINI PROJECT
 ![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c&logoColor=white)
 
 
