@@ -4,8 +4,8 @@
 
 | Name | SRN |
 |------|-----|
-| Vikhyat Agrawal | PES2UG24CS585 |
-| Vineet Toshniwal | PES2UG24CS589 |
+| Viren James Fernandes | PES2UG24CS590 |
+| Divyanshu Jha | PES2UG24CS915|
 
 ---
 
