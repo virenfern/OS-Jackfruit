@@ -82,20 +82,7 @@ wait
 time sudo ./engine run cpu_exp ../rootfs /cpu_hog 10 --nice 0 & \
 time sudo ./engine run io_exp ../rootfs /io_pulse 20 200 &
 wait
-```
-#Divyanshu
-# 5. TASK 6: Memory Limit Enforcement
-# Soft limit 3MB, Hard limit 6MB
-```
-sudo ./engine start memtest ../rootfs /memory_hog 1 500 --soft-mib 3 --hard-mib 6
-# Check kernel logs for the kill event
-sudo dmesg | tail -n 20
-```
-# 6. Clean Teardown
-# Stop supervisor with Ctrl+C in Terminal 1, then:
-```bash
-sudo rmmod monitor
-sudo rm -f /tmp/mini_runtime.sock
+
 ```
 ## 3. Demo Screenshots
 
