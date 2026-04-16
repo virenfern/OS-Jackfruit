@@ -71,8 +71,8 @@
 
 | Name | SRN |
 |------|-----|
-| Vivian Sobers E | PES1UG24CS901 |
-| Dhawal Pathak | PES1UG24CS151 |
+|VIREN JAMES FERNANDES | PES2UG24CS590|
+| DIVYANSHU JHA | PES2UG24CS915|
 
 ---
 
