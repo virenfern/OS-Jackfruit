@@ -46,6 +46,42 @@ This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
 ```bash
 sudo insmod monitor.ko
 ```
+### Verify Module Load:
+```bash
+sudo dmesg | tail -n 2
+```
+### Start the Supervisor (Terminal 1):
+```bash
+sudo ./engine supervisor ./rootfs
+```
+### Running a Container (Tasks 1-5)
+```bash
+# Command: start <ID> <Flags> <Rootfs> <Command>
+sudo ./engine start alpha --soft-mib 50 --hard-mib 100 ./rootfs /bin/memory_hog
+```
+### Verify the Process (Task 2):
+```bash
+sudo ./engine ps
+```
+### Check Memory Monitoring (Tasks 4 & 5):
+```bash
+sudo dmesg | grep "container_monitor"
+```
+### Task 6
+```bash
+sudo ./engine stop alpha
+```
+Shut Down the Supervisor:
+Go back to Terminal 1 and press Ctrl + C.
+Unload the Module:
+In Terminal 2, run:
+```bash
+sudo rmmod monitor
+```
+Then run the following command:
+```bash
+sudo dmesg | tail -n 10
+```
 
 ## 3. Demo Screenshots
 
