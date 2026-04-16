@@ -237,42 +237,42 @@ flowchart TD
 ### Screenshot 1 — Multi-container supervision
 Two containers (`alpha`, `beta`) running under a single supervisor process alongside previously tracked containers.
 
-![screenshot1](screenshot1.png)
+![screenshot1](screenshots/screenshot1.png)
 
 ### Screenshot 2 — Metadata tracking
 `ps` output showing container ID, state, host PID, and start time for all tracked containers.
 
-![screenshot2](screenshot2.png)
+![screenshot2](screenshots/screenshot2.png)
 
 ### Screenshot 3 — Bounded-buffer logging
 Log file contents captured through the pipe → bounded buffer → logging thread pipeline. Container hostname output routed to its log file.
 
-![screenshot3](screenshot3.png)
+![screenshot3](screenshots/screenshot3.png)
 
 ### Screenshot 4 — CLI and IPC
 `stop` command issued from the CLI client, routed to the supervisor over a UNIX domain socket, supervisor responds and updates state.
 
-![screenshot4](screenshot4.png)
+![screenshot4](screenshots/screenshot4.png)
 
 ### Screenshot 5 — Soft-limit warning
 `dmesg` output showing the kernel module emitting a SOFT LIMIT warning when the container's RSS exceeded 3 MiB.
 
-![screenshot5](screenshot5.png)
+![screenshot6](screenshots/screenshot5.png)
 
 ### Screenshot 6 — Hard-limit enforcement
 `dmesg` output showing the kernel module killing the container when RSS exceeded 6 MiB. Supervisor metadata updates state to `killed`.
 
-![screenshot6](screenshot6.png)
+![screenshot6](screenshots/screenshot6.png)
 
 ### Screenshot 7 — Scheduling experiment
 Two CPU-bound containers run simultaneously with `nice=0` and `nice=15`. The lower-priority container took ~2× longer to complete the same workload.
 
-![screenshot7](screenshots_7.png)
+![screenshot7](screenshots/screenshot7.png)
 
 ### Screenshot 8 — Clean teardown
 Supervisor exits cleanly on `SIGINT`. No zombie processes remain. Container states reflect final exit conditions.
 
-![screenshot8](screenshot8.png)
+![screenshot8](screenshots/screenshot8.png)
 
 ---
  
