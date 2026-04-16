@@ -42,8 +42,11 @@ make
 ```
 
 This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
+### Load the Monitor Kernel Module
+```bash
+sudo insmod monitor.ko
 ```
-```
+
 ## 3. Demo Screenshots
 
 ### Screenshot 1 — Multi-container supervision
