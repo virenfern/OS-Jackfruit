@@ -51,7 +51,7 @@ sudo insmod monitor.ko
 ```bash
 sudo ./engine supervisor ./rootfs
 ```
-### Running a Container (Tasks 1-5)
+### Running a Container (Tasks 1-5) Terminal 2 
 ```bash
 # Command: start <ID> <Flags> <Rootfs> <Command>
 sudo ./engine start alpha --soft-mib 50 --hard-mib 100 ./rootfs /bin/memory_hog
