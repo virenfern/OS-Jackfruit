@@ -28,7 +28,7 @@ sudo apt install -y build-essential linux-headers-$(uname -r)
 ### Prepare Root Filesystem
 
 ```bash
-cd Container-Runtime
+cd ~/OS-Jackfruit/boilerplate
 mkdir rootfs
 wget https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-minirootfs-3.20.3-x86_64.tar.gz
 tar -xzf alpine-minirootfs-3.20.3-x86_64.tar.gz -C rootfs
@@ -42,47 +42,7 @@ make
 ```
 
 This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
-
-# 1. Prep and Build
-# Move to the project root and prep workloads
-```bash
-cd ~/OS-Jackfruit/boilerplate
-sudo make clean && make
-cp cpu_hog io_pulse memory_hog ../rootfs/
 ```
-
-# 2. Kernel and Supervisor (Terminal 1) 
-# Load the monitor and start the supervisor
-```bash
-sudo insmod monitor.ko
-# Verify device creation
-ls -l /dev/container_monitor
-# Launch supervisor (pointing to rootfs one level up)
-sudo ./engine supervisor ../rootfs
-```
-#  3. Basic CLI Operations (Terminal 2)
-# Run these while Terminal 1 is active
-```bash
-sudo ./engine start alpha ../rootfs /bin/hostname
-sudo ./engine ps
-sudo ./engine logs alpha
-sudo ./engine stop alpha
-```
-# 4. TASK 5: Scheduling Experiments
-
-# Experiment A: Nice Value Competition (Priority)
-```
-time sudo ./engine run cpu_normal ../rootfs /cpu_hog 10 --nice 0 & \
-time sudo ./engine run cpu_nice ../rootfs /cpu_hog 10 --nice 15 &
-wait
-```
-
-# Experiment B: CPU-Bound vs I/O-Bound
-```
-time sudo ./engine run cpu_exp ../rootfs /cpu_hog 10 --nice 0 & \
-time sudo ./engine run io_exp ../rootfs /io_pulse 20 200 &
-wait
-
 ```
 ## 3. Demo Screenshots
 
