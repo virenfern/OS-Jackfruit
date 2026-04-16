@@ -46,10 +46,7 @@ This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
 ```bash
 sudo insmod monitor.ko
 ```
-### Verify Module Load:
-```bash
-sudo dmesg | tail -n 2
-```
+
 ### Start the Supervisor (Terminal 1):
 ```bash
 sudo ./engine supervisor ./rootfs
