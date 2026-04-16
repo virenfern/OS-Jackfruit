@@ -3,21 +3,9 @@
 <div align="center">
 
 ![Language](https://img.shields.io/badge/Language-C-0033CC?style=for-the-badge&logo=c&logoColor=white&labelColor=1E5BFF)
-![Platform](https://img.shields.io/badge/Platform-Linux-000000?style=for-the-badge&logo=linux&logoColor=white&labelColor=1C1C1C)
-![Kernel](https://img.shields.io/badge/Kernel-Space-CC4400?style=for-the-badge&logo=linux&logoColor=white&labelColor=FF6A00)
-![Runtime](https://img.shields.io/badge/Runtime-Container%20Engine-009944?style=for-the-badge&labelColor=00CC66)
-![Isolation](https://img.shields.io/badge/Isolation-Namespaces-00897B?style=for-the-badge&labelColor=00BFA5)
-![IPC](https://img.shields.io/badge/IPC-Pipes%20%7C%20Sockets-0088AA?style=for-the-badge&labelColor=00AACC)
-![Scheduler](https://img.shields.io/badge/Scheduler-CFS-8B0000?style=for-the-badge&labelColor=C62828)
-![Memory](https://img.shields.io/badge/Memory-RSS%20Tracking-C9A000?style=for-the-badge&labelColor=E6C200)
-![Architecture](https://img.shields.io/badge/Architecture-Supervisor%20Model-5A2DCC?style=for-the-badge&labelColor=7C4DFF)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-007F33?style=for-the-badge&labelColor=00A84D)
-![Build](https://img.shields.io/badge/Build-Makefile-4B1FB3?style=for-the-badge&labelColor=6A3DFF)
-![License](https://img.shields.io/badge/License-Apache%202.0-B31252?style=for-the-badge&labelColor=E91E63)
 
 **A lightweight Docker-like container runtime built from scratch in C.**  
-Runs isolated containers using Linux namespaces, captures output through a bounded-buffer logging pipeline,  
-enforces memory limits via a kernel module, and exposes a supervisor CLI.
+
 
 </div>
 
