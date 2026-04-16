@@ -275,7 +275,7 @@ Supervisor exits cleanly on `SIGINT`. No zombie processes remain. Container stat
 ![screenshot8](screenshots_8.png)
 
 ---
-
+ 
 ## Engineering Analysis
 
 ### 4.1 Isolation Mechanisms
