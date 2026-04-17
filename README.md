@@ -77,97 +77,100 @@
 ---
 
 ## Build, Load, and Run Instructions
-
+ 
 ### Dependencies
-
+ 
 ```bash
 sudo apt update
 sudo apt install -y build-essential linux-headers-$(uname -r)
 ```
-
+ 
 ### Prepare Root Filesystem
-
+ 
 ```bash
-cd Container-Runtime
-mkdir rootfs
+mkdir -p rootfs
 wget https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-minirootfs-3.20.3-x86_64.tar.gz
 tar -xzf alpine-minirootfs-3.20.3-x86_64.tar.gz -C rootfs
 ```
-
+ 
 ### Build
-
+ 
 ```bash
 cd boilerplate
 make
 ```
-
-This builds `engine`, `monitor.ko`, `memory_hog`, `cpu_hog`, and `io_pulse`.
-
-### Copy Workloads into Rootfs
-
+ 
+This builds: `engine`, `memory_hog`, `cpu_hog`, `io_pulse`, and `monitor.ko`.
+ 
+### Copy Workload Binaries into rootfs
+ 
+The Alpine rootfs does not have the host's dynamic libraries, so binaries must be statically linked:
+ 
 ```bash
-cp cpu_hog io_pulse memory_hog ../rootfs/
+cd boilerplate
+gcc -O2 -static -o memory_hog memory_hog.c
+gcc -O2 -static -o cpu_hog cpu_hog.c
+gcc -O2 -static -o io_pulse io_pulse.c
+cp memory_hog cpu_hog io_pulse ../rootfs/
 ```
-
-### Load Kernel Module
-
+ 
+### Load the Kernel Module
+ 
 ```bash
+cd boilerplate
 sudo insmod monitor.ko
-ls -l /dev/container_monitor
+ls /dev/container_monitor   # should exist
 ```
-
-### Start Supervisor
-
+ 
+### Start the Supervisor
+ 
+In **Terminal 1** — the supervisor blocks here, listening for CLI commands over a UNIX domain socket at `/tmp/mini_runtime.sock`:
+ 
 ```bash
-# Terminal 1
-sudo ./engine supervisor ../rootfs
+cd ~/OS-Jackfruit
+sudo ./boilerplate/engine supervisor ./rootfs
 ```
-
-### Launch Containers
-
+ 
+### Use the CLI
+ 
+In **Terminal 2**:
+ 
 ```bash
-# Terminal 2
-sudo ./engine start alpha ../rootfs /bin/hostname
-sudo ./engine start beta  ../rootfs /bin/sh
-sudo ./engine ps
-sudo ./engine logs alpha
-sudo ./engine stop alpha
+# Start containers in the background
+sudo ./boilerplate/engine start alpha ./rootfs "/cpu_hog 30"
+sudo ./boilerplate/engine start beta  ./rootfs "/cpu_hog 30"
+ 
+# List containers and metadata
+sudo ./boilerplate/engine ps
+ 
+# View container logs
+sudo ./boilerplate/engine logs alpha
+ 
+# Stop a container
+sudo ./boilerplate/engine stop alpha
+ 
+# Start with memory limits
+sudo ./boilerplate/engine start memtest ./rootfs /memory_hog --soft-mib 5 --hard-mib 10
+ 
+# Start with scheduling priority
+sudo ./boilerplate/engine start highpri ./rootfs "/cpu_hog 20" --nice -5
+sudo ./boilerplate/engine start lowpri  ./rootfs "/cpu_hog 20" --nice 10
 ```
-
-### Run a Container in Foreground
-
+ 
+### Inspect Kernel Logs
+ 
 ```bash
-sudo ./engine run mycontainer ../rootfs /cpu_hog 5
+sudo dmesg | grep container_monitor | tail -20
 ```
-
-### Memory Limit Test
-
-```bash
-sudo ./engine start memtest ../rootfs /memory_hog 1 500 --soft-mib 3 --hard-mib 6
-sudo dmesg | grep memtest
-```
-
-### Scheduling Experiments
-
-```bash
-# Two CPU-bound containers with different priorities
-time sudo ./engine run cpu_normal ../rootfs /cpu_hog 10 --nice 0  &
-time sudo ./engine run cpu_nice   ../rootfs /cpu_hog 10 --nice 15 &
-wait
-
-# CPU-bound vs I/O-bound
-time sudo ./engine run cpu_exp ../rootfs /cpu_hog  10    --nice 0 &
-time sudo ./engine run io_exp  ../rootfs /io_pulse 20 200         &
-wait
-```
-
-### Unload Module and Clean Up
-
+ 
+### Shutdown and Cleanup
+ 
+Press `Ctrl+C` in Terminal 1 to stop the supervisor, then:
+ 
 ```bash
 sudo rmmod monitor
-unlink /tmp/mini_runtime.sock
+ps aux | grep engine   # should show nothing
 ```
-
 > [!WARNING]
 > The runtime requires `root` privileges for `clone()` with namespace flags and `insmod`. Never run untrusted workloads without additional seccomp/capability restrictions.
 
